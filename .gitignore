@@ -1,0 +1,13 @@
+# 训练结果图片（几百张）
+runs/train/exp/*.jpg
+runs/train/exp/*.png
+runs/train/exp/*.csv
+
+# 数据集
+data/visdrone/
+*.zip
+*.7z
+
+# Python缓存
+__pycache__/
+*.pyc
