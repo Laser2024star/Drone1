@@ -1,0 +1,13 @@
+﻿# UAVDB 数据集配置
+path: C:/Users/Laser/Autonomous-Drone-Image-Recognition-System/Autonomous-Drone-Image-Recognition-System/Drone-Surveillance-System/data/uavdb
+
+# 训练/验证/测试集路径
+train: train
+val: val
+test: test
+
+# 类别数（单类别：无人机）
+nc: 1
+
+# 类别名称
+names: ['drone']
