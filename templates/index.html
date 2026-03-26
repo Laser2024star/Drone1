@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YOLO 视频检测系统</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; text-align: center; padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        h1 { color: #333; }
+        
+        /* 上传区域样式 */
+        .upload-area {
+            border: 2px dashed #ccc;
+            padding: 40px;
+            margin: 20px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .upload-area:hover { border-color: #007bff; background: #f8f9fa; }
+        input[type="file"] { display: none; }
+        .btn {
+            background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px;
+        }
+        .btn:disabled { background: #ccc; cursor: not-allowed; }
+        
+        /* 视频展示区域 */
+        .video-container { margin-top: 20px; display: none; }
+        video { width: 100%; max-height: 500px; border-radius: 8px; background: #000; }
+        
+        /* 加载动画 */
+        .loader {
+            display: none; border: 4px solid #f3f3f3; border-top: 4px solid #007bff;
+            border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .status-text { color: #666; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🎥 YOLO 视频智能检测</h1>
+    <p>上传视频文件，服务器将进行目标检测并返回结果。</p>
+
+    <!-- 上传区域 -->
+    <div class="upload-area" onclick="document.getElementById('videoInput').click()">
+        <p>点击此处选择视频文件 (MP4, AVI, MOV)</p>
+        <input type="file" id="videoInput" accept="video/*" onchange="handleFileSelect(this)">
+        <p id="fileName" style="color: #007bff; font-weight: bold;"></p>
+    </div>
+
+    <button id="uploadBtn" class="btn" onclick="uploadVideo()" disabled>开始处理</button>
+
+    <!-- 加载状态 -->
+    <div id="loader" class="loader"></div>
+    <p id="statusText" class="status-text"></p>
+
+    <!-- 结果展示 -->
+    <div id="resultContainer" class="video-container">
+        <h3>✅ 检测完成</h3>
+        <video id="resultVideo" controls autoplay>
+            <source src="" type="video/mp4">
+            您的浏览器不支持视频标签。
+        </video>
+        <br><br>
+        <a id="downloadLink" class="btn" style="text-decoration: none; display: inline-block;" download>下载结果视频</a>
+    </div>
+</div>
+
+<script>
+    let selectedFile = null;
+
+    function handleFileSelect(input) {
+        if (input.files && input.files[0]) {
+            selectedFile = input.files[0];
+            document.getElementById('fileName').innerText = "已选择: " + selectedFile.name;
+            document.getElementById('uploadBtn').disabled = false;
+            // 重置状态
+            document.getElementById('resultContainer').style.display = 'none';
+            document.getElementById('statusText').innerText = "";
+        }
+    }
+
+    async function uploadVideo() {
+        if (!selectedFile) return;
+
+        const formData = new FormData();
+        formData.append('video', selectedFile);
+
+        // UI 状态更新
+        document.getElementById('uploadBtn').disabled = true;
+        document.getElementById('loader').style.display = 'block';
+        document.getElementById('statusText').innerText = "⏳ 正在上传并处理视频，请稍候... (大视频可能需要几分钟)";
+        document.getElementById('resultContainer').style.display = 'none';
+
+        try {
+            const response = await fetch('/upload_video', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                document.getElementById('statusText').innerText = "✨ 处理完成！";
+                
+                // 设置视频源
+                const videoUrl = data.video_url;
+                const videoPlayer = document.getElementById('resultVideo');
+                videoPlayer.src = videoUrl;
+                
+                // 设置下载链接
+                const downloadLink = document.getElementById('downloadLink');
+                downloadLink.href = videoUrl;
+                downloadLink.innerText = "下载处理后的视频";
+
+                document.getElementById('resultContainer').style.display = 'block';
+            } else {
+                throw new Error(data.error || '处理失败');
+            }
+        } catch (error) {
+            console.error(error);
+            document.getElementById('statusText').innerText = "❌ 错误: " + error.message;
+            document.getElementById('uploadBtn').disabled = false;
+        } finally {
+            document.getElementById('loader').style.display = 'none';
+        }
+    }
+</script>
+
+</body>
+</html>
